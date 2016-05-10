@@ -1,18 +1,18 @@
 #!/bin/bash
 set -e
 # Performs both normal sequential extraction and distributed extraction and compares the outputs.
-THISDIR=$(dirname $0)
+THISDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TMPDIR=$(mktemp -d)
 CONFIG_FILE=$TMPDIR/config.properties
 
 cp $THISDIR/extraction/src/test/resources/config.properties $TMPDIR
 SPARK_CONF_FILE=$THISDIR/extraction/src/test/resources/dist-config.properties
-
-eval "sed -i 's/base\-dir\=src/base\-dir\=$THISDIR\/extraction\/src/g' $CONFIG_FILE"
+eval "sed -i 's|base\-dir\=.*|base\-dir\=$THISDIR/extraction/src/test/resources/data|g' $CONFIG_FILE"
 
 echo "===================================================================="
 echo "Running distributed extraction"
 echo "===================================================================="
+find $THISDIR/extraction/src/test/resources/data -type d -name \*gz | xargs rm -rf
 git clean -f $THISDIR/extraction/src/test/resources/data/*
 ./run extraction $CONFIG_FILE $SPARK_CONF_FILE
 mkdir -p $TMPDIR/dbpedia-test-par-extraction
@@ -21,7 +21,7 @@ NBFILES=$(find $DUMPDIR -type f -name \*gz | wc -l)
 echo "Moving to $TMPDIR/dbpedia-test-par-extraction/ $NBFILES files."
 
 if [[ $NBFILES == 0 ]]; then
-    echo "Spark did not produce any useful outputs"
+    echo "Spark did not produce any useful output"
     exit 1
 fi
 mv `grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p'`/*wiki/*/*wiki*.gz $TMPDIR/dbpedia-test-par-extraction/
@@ -33,6 +33,7 @@ git clean -f $THISDIR/extraction/src/test/resources/data/*
 ./run seq-extraction $CONFIG_FILE
 mkdir -p $TMPDIR/dbpedia-test-seq-extraction
 mv `grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p'`/*wiki/*/*wiki*.gz $TMPDIR/dbpedia-test-seq-extraction
+
 
 echo "===================================================================="
 echo "Computing diffs:"
