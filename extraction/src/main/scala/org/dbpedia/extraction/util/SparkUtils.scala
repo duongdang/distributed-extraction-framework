@@ -19,7 +19,7 @@ object SparkUtils
    * Stores the SparkContext instance.
    */
   private var sc: SparkContext = null
-
+  private val logger = Logger.getLogger(getClass.getName)
   /**
    * Set all loggers to the given log level.  Returns a map of the value of every logger
    * @param level
@@ -56,22 +56,13 @@ object SparkUtils
   {
     if (sc == null)
     {
-      val conf = new SparkConf().setMaster(config.sparkMaster).setAppName(config.sparkAppName)
+      val conf = new SparkConf().setAppName(config.sparkAppName)
+
+      if (config.sparkMaster != null) {
+        conf.setMaster(config.sparkMaster)
+      }
       for ((property, value) <- config.sparkProperties)
         conf.set(property, value)
-      conf.setSparkHome(config.sparkHome)
-      val distJarName = if (Files.exists(Paths.get("target/extraction-4.1-SNAPSHOT.jar")))
-      {
-        "target/extraction-4.1-SNAPSHOT.jar"
-      } else if (Files.exists(Paths.get("extraction/target/extraction-4.1-SNAPSHOT.jar")))
-      {
-        "extraction/target/extraction-4.1-SNAPSHOT.jar"
-      } else
-      {
-        throw new FileNotFoundException("extraction-4.1-SNAPSHOT.jar cannot be found in extraction/target. Please run mvn install -Dmaven.test.skip=true to build JAR first.")
-      }
-
-      conf.setJars(List(distJarName))
       conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       conf.set("spark.kryo.registrator", "org.dbpedia.extraction.spark.serialize.KryoExtractionRegistrator")
       conf.set("spark.kryoserializer.buffer.mb", "100")
