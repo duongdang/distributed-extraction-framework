@@ -7,13 +7,12 @@ CONFIG_FILE=$TMPDIR/config.properties
 
 cp $THISDIR/extraction/src/test/resources/config.properties $TMPDIR
 SPARK_CONF_FILE=$THISDIR/extraction/src/test/resources/dist-config.properties
-eval "sed -i 's|base\-dir\=.*|base\-dir\=$THISDIR/extraction/src/test/resources/data|g' $CONFIG_FILE"
+eval "sed -i 's|base\-dir\=.*|base\-dir\=extraction/src/test/resources/data|g' $CONFIG_FILE"
 
 echo "===================================================================="
 echo "Running distributed extraction"
 echo "===================================================================="
 find $THISDIR/extraction/src/test/resources/data -type d -name \*gz | xargs rm -rf
-git clean -f $THISDIR/extraction/src/test/resources/data/*
 ./run extraction $CONFIG_FILE $SPARK_CONF_FILE
 mkdir -p $TMPDIR/dbpedia-test-par-extraction
 DUMPDIR=$(grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p')
@@ -29,7 +28,6 @@ mv `grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p'`/*wiki/*/*wiki*.gz $T
 echo "===================================================================="
 echo "Running sequential extraction"
 echo "===================================================================="
-git clean -f $THISDIR/extraction/src/test/resources/data/*
 ./run seq-extraction $CONFIG_FILE
 mkdir -p $TMPDIR/dbpedia-test-seq-extraction
 mv `grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p'`/*wiki/*/*wiki*.gz $TMPDIR/dbpedia-test-seq-extraction
