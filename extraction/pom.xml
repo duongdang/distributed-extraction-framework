@@ -29,6 +29,32 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                    <finalName>${project.artifactId}-assembly-${project.version}</finalName>
+		    <transformers>
+		      <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                      <transformer
+                          implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                        <resource>reference.conf</resource>
+                      </transformer>
+                      <transformer
+                          implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                        <manifestEntries>
+                          <Main-Class>akka.Main</Main-Class>
+                        </manifestEntries>
+                      </transformer>
+		    </transformers>
+                </configuration>
             </plugin>
 
             <plugin>
@@ -113,7 +139,6 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.11</artifactId>
             <version>${spark.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
