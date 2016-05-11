@@ -9,7 +9,9 @@ jdk:
 #     - master
 before_install:
   - sed -i.bak -e 's|https://nexus.codehaus.org/snapshots/|https://oss.sonatype.org/content/repositories/codehaus-snapshots/|g' ~/.m2/settings.xml
-script: "mvn test"
+script:
+  - mvn test
+  - ./run-extraction-test
 notifications:
   email:
     recipients:
