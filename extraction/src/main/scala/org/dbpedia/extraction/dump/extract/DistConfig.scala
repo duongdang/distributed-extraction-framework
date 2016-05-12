@@ -28,7 +28,7 @@ class DistConfig(distConfigProps: Properties, extractionConfigProps: Properties,
   val sparkHome = distConfigProps.getProperty("spark-home", sys.env.get("SPARK_HOME").getOrElse(""))
 
   /** By default assume master is runnning locally; use 4 cores */
-  val sparkMaster = distConfigProps.getProperty("spark-master", "local[4]")
+  val sparkMaster = distConfigProps.getProperty("spark-master", null)
 
   /** Shows up on Spark Web UI */
   val sparkAppName = distConfigProps.getProperty("spark-appname", "dbpedia-distributed-extraction-framework")
