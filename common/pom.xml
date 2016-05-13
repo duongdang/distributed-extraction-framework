@@ -11,7 +11,7 @@
     </parent>
 
     <groupId>org.dbpedia.distributed-extraction</groupId>
-    <artifactId>common</artifactId>
+    <artifactId>common_2.10</artifactId>
     <version>4.1-SNAPSHOT</version>
     <name>DBpedia Distributed Extraction Framework Commons</name>
 

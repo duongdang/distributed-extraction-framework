@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.dbpedia.distributed-extraction</groupId>
-    <artifactId>extraction</artifactId>
+    <artifactId>extraction_2.10</artifactId>
     <version>4.1-SNAPSHOT</version>
     <name>DBpedia Distributed Dump Extractor</name>
 
@@ -113,20 +113,20 @@
     <dependencies>
         <dependency>
             <groupId>org.dbpedia.distributed-extraction</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>common_2.10</artifactId>
             <version>4.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.dbpedia.extraction</groupId>
-            <artifactId>core</artifactId>
-            <version>4.1</version>
+            <artifactId>core_2.10</artifactId>
+            <version>4.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.dbpedia.extraction</groupId>
-            <artifactId>dump</artifactId>
-            <version>4.1</version>
+            <artifactId>dump_2.10</artifactId>
+            <version>4.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
