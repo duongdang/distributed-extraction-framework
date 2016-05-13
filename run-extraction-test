@@ -12,7 +12,7 @@ eval "sed -i 's|base\-dir\=.*|base\-dir\=extraction/src/test/resources/data|g' $
 echo "===================================================================="
 echo "Running distributed extraction"
 echo "===================================================================="
-find $THISDIR/extraction/src/test/resources/data -type d -name \*gz | xargs rm -rf
+find $THISDIR/extraction/src/test/resources/data -type d -name extraction | xargs rm -rf
 # git clean -fd $THISDIR/extraction/src/test/
 ./run extraction $CONFIG_FILE $SPARK_CONF_FILE
 mkdir -p $TMPDIR/dbpedia-test-par-extraction
@@ -32,7 +32,6 @@ echo "===================================================================="
 ./run seq-extraction $CONFIG_FILE
 mkdir -p $TMPDIR/dbpedia-test-seq-extraction
 mv `grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p'`/*wiki/*/*wiki*.gz $TMPDIR/dbpedia-test-seq-extraction
-
 
 echo "===================================================================="
 echo "Computing diffs:"

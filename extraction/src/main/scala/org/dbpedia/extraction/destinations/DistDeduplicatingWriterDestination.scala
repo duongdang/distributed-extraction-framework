@@ -22,6 +22,8 @@ class DistDeduplicatingWriterDestination(path: Path, hadoopConfiguration: Config
   private val logger = Logger.getLogger(getClass.getName)
   private val fileSystem = FileSystem.get(hadoopConfiguration)
   private val grouped_output = new Path(path, "grouped")
+  private val quads_text_output = new Path(path, "quads_text")
+  private val quads_parquet_output = new Path(path, "quads_parquet")
 
   /**
    * Writes RDD of quads (after extracting unique quads) to path using DBpediaCompositeOutputFormat.
@@ -30,8 +32,6 @@ class DistDeduplicatingWriterDestination(path: Path, hadoopConfiguration: Config
    */
   override def write(rdd: RDD[Seq[Quad]])
   {
-    List(grouped_output) foreach { p => if (!fileSystem.exists(path)) fileSystem.mkdirs(p)}
-
     rdd.flatMap
     {
       quads =>
@@ -44,6 +44,12 @@ class DistDeduplicatingWriterDestination(path: Path, hadoopConfiguration: Config
                              classOf[QuadSeqWritable],
                              classOf[DBpediaCompositeOutputFormat],
                              hadoopConfiguration)
+
+    List(grouped_output) foreach { p => if (!fileSystem.exists(path)) fileSystem.mkdirs(p)}
+    rdd.flatMap { x => x}
+    .map{ q => List(q.language, q.dataset, q.subject,
+      q.predicate, q.value, q.context, q.datatype).mkString("\t") }
+    .saveAsTextFile(quads_text_output.toString)
   }
 
   override def close() = ()
