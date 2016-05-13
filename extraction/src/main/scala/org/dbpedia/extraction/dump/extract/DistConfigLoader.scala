@@ -226,15 +226,7 @@ class DistConfigLoader(config: DistConfig, sparkContext: SparkContext)
 
     lazy val destination =
     {
-      // Create empty directories for all datasets. This is not strictly necessary because Hadoop would create the directories
-      // it needs to by itself, though in that case the directories for unused datasets will obviously be absent.
-      val datasets = extractor.datasets
-      val outputPath = finder.directory(date)
-
-      for ((suffix, format) <- config.formats; dataset <- datasets)
-      {
-        new Path(outputPath, s"${finder.wikiName}-$date-${dataset.name.replace('_', '-')}.$suffix").mkdirs()
-      }
+      val outputPath = new Path(finder.directory(date), "extraction")
       new DistMarkerDestination(new DistDeduplicatingWriterDestination(outputPath, hadoopConfiguration), finder.file(date, Extraction.Complete), false)
     }
 

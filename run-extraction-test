@@ -13,6 +13,7 @@ echo "===================================================================="
 echo "Running distributed extraction"
 echo "===================================================================="
 find $THISDIR/extraction/src/test/resources/data -type d -name \*gz | xargs rm -rf
+# git clean -fd $THISDIR/extraction/src/test/
 ./run extraction $CONFIG_FILE $SPARK_CONF_FILE
 mkdir -p $TMPDIR/dbpedia-test-par-extraction
 DUMPDIR=$(grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p')
@@ -23,7 +24,7 @@ if [[ $NBFILES == 0 ]]; then
     echo "Spark did not produce any useful output"
     exit 1
 fi
-mv `grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p'`/*wiki/*/*wiki*.gz $TMPDIR/dbpedia-test-par-extraction/
+mv `grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p'`/*wiki/*/extraction/* $TMPDIR/dbpedia-test-par-extraction/
 
 echo "===================================================================="
 echo "Running sequential extraction"
@@ -36,7 +37,7 @@ mv `grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p'`/*wiki/*/*wiki*.gz $T
 echo "===================================================================="
 echo "Computing diffs:"
 echo "===================================================================="
-diffs=`diff <(gzip -dc $TMPDIR/dbpedia-test-seq-extraction/*.gz | grep -v "^#" | sort) <(gzip -dc $TMPDIR/dbpedia-test-par-extraction/*wiki*.gz/part*.gz | grep -v "^#" | sort)`
+diffs=`diff <(gzip -dc $TMPDIR/dbpedia-test-seq-extraction/*.gz | grep -v "^#" | sort) <(gzip -dc $TMPDIR/dbpedia-test-par-extraction/grouped/*wiki*.gz/part*.gz | grep -v "^#" | sort)`
 
 echo "See result details in $TMPDIR"
 if [ -z "$diffs" ]; then

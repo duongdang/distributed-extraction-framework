@@ -7,6 +7,8 @@ import org.apache.hadoop.io.Text
 import org.dbpedia.extraction.spark.io.QuadSeqWritable
 import org.dbpedia.extraction.spark.io.output.DBpediaCompositeOutputFormat
 import org.apache.spark.SparkContext._
+import java.util.logging.{Level, Logger}
+import org.apache.hadoop.fs._
 
 /**
  * Destination where RDF graphs are deduplicated and written to a Hadoop Path.
@@ -17,6 +19,9 @@ import org.apache.spark.SparkContext._
 class DistDeduplicatingWriterDestination(path: Path, hadoopConfiguration: Configuration) extends DistDestination
 {
   override def open() = ()
+  private val logger = Logger.getLogger(getClass.getName)
+  private val fileSystem = FileSystem.get(hadoopConfiguration)
+  private val grouped_output = new Path(path, "grouped")
 
   /**
    * Writes RDD of quads (after extracting unique quads) to path using DBpediaCompositeOutputFormat.
@@ -25,6 +30,8 @@ class DistDeduplicatingWriterDestination(path: Path, hadoopConfiguration: Config
    */
   override def write(rdd: RDD[Seq[Quad]])
   {
+    List(grouped_output) foreach { p => if (!fileSystem.exists(path)) fileSystem.mkdirs(p)}
+
     rdd.flatMap
     {
       quads =>
@@ -32,7 +39,7 @@ class DistDeduplicatingWriterDestination(path: Path, hadoopConfiguration: Config
         {
           case (key: Text, quads: Seq[Quad]) => (key, new QuadSeqWritable(quads))
         }
-    }.saveAsNewAPIHadoopFile(path.toString,
+    }.saveAsNewAPIHadoopFile(grouped_output.toString,
                              classOf[Text],
                              classOf[QuadSeqWritable],
                              classOf[DBpediaCompositeOutputFormat],
