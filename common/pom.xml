@@ -27,8 +27,8 @@
     <dependencies>
         <dependency>
             <groupId>org.dbpedia.extraction</groupId>
-            <artifactId>core</artifactId>
-            <version>4.1</version>
+            <artifactId>core_2.10</artifactId>
+            <version>4.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
