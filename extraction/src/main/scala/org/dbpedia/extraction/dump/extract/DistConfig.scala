@@ -102,10 +102,10 @@ class DistConfig(distConfigProps: Properties, extractionConfigProps: Properties,
   val dumpDir = getPath("base-dir", pathMustExist = true)
 
   /** Local ontology file, downloaded for speed and reproducibility */
-  val ontologyFile = getPath("ontology", pathMustExist = false)
+  val ontologyFile = getPath("ontology", pathMustExist = true)
 
   /** Local mappings files, downloaded for speed and reproducibility */
-  val mappingsDir = getPath("mappings", pathMustExist = false)
+  val mappingsDir = getPath("mappings", pathMustExist = true)
 
   val requireComplete = extractionConfig.requireComplete
 
