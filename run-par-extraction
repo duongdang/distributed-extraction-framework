@@ -1,0 +1,43 @@
+#!/bin/bash
+
+TMPDIR=$1
+if [ -z $TMPDIR ]; then
+    TMPDIR=$(mktemp -d)
+fi
+
+THISDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+CONFIG_FILE=$TMPDIR/config.properties
+SPARK_CONF_FILE=$THISDIR/extraction/src/test/resources/dist-config.properties
+function finish() {
+    echo "See details inside $TMPDIR"
+}
+trap finish EXIT
+cp $THISDIR/extraction/src/test/resources/config.properties $TMPDIR
+eval "sed -i 's|base\-dir\=.*|base\-dir\=$THISDIR/extraction/src/test/resources/data|g' $CONFIG_FILE"
+eval "sed -i 's|mappings\=.*|mappings\=$THISDIR/extraction/src/test/resources/data/mappings|g' $CONFIG_FILE"
+eval "sed -i 's|ontology\=.*|ontology\=$THISDIR/extraction/src/test/resources/data/ontology.xml|g' $CONFIG_FILE"
+
+echo "===================================================================="
+echo "Running distributed extraction"
+echo "===================================================================="
+git clean -df $THISDIR/extraction/src/test/resources
+# rm $THISDIR/extraction/src/test/resources/data/enwiki/20160407/.enwiki-20160407-extraction-complete.crc
+# rm $THISDIR/extraction/src/test/resources/data/enwiki/20160407/.enwiki-20160407-template-redirects.obj.crc
+# rm $THISDIR/extraction/src/test/resources/data/enwiki/config.properties
+# rm $THISDIR/extraction/src/test/resources/data/enwiki/20160407/enwiki-20160407-extraction-complete
+# rm $THISDIR/extraction/src/test/resources/data/enwiki/20160407/enwiki-20160407-template-redirects.obj
+
+./run extraction $CONFIG_FILE $SPARK_CONF_FILE
+mkdir -p $TMPDIR/dbpedia-test-par-extraction
+DUMPDIR=$(grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p')
+mv `grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p'`/*wiki/*/extraction/* $TMPDIR/dbpedia-test-par-extraction/
+
+NBQUADSLINES=$(cat $TMPDIR/dbpedia-test-par-extraction/quads_text/part* | wc -l)
+NBFILES=$(find $TMPDIR/dbpedia-test-par-extraction/ -type f -name \*gz | wc -l)
+
+if [[ $NBQUADSLINES == 0 && $NBFILES == 0 ]]; then
+    echo "Spark did not produce any useful output."
+    exit 1
+fi
+
+echo "Spark created $NBFILES grouped files and a csv with $NBQUADSLINES lines."

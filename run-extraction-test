@@ -1,30 +1,17 @@
 #!/bin/bash
 set -e
 # Performs both normal sequential extraction and distributed extraction and compares the outputs.
-THISDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TMPDIR=$(mktemp -d)
+./run-par-extraction $TMPDIR || exit 1
+
+THISDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CONFIG_FILE=$TMPDIR/config.properties
+SPARK_CONF_FILE=$THISDIR/extraction/src/test/resources/dist-config.properties
 
 cp $THISDIR/extraction/src/test/resources/config.properties $TMPDIR
-SPARK_CONF_FILE=$THISDIR/extraction/src/test/resources/dist-config.properties
-eval "sed -i 's|base\-dir\=.*|base\-dir\=extraction/src/test/resources/data|g' $CONFIG_FILE"
-
-echo "===================================================================="
-echo "Running distributed extraction"
-echo "===================================================================="
-find $THISDIR/extraction/src/test/resources/data -type d -name extraction | xargs rm -rf
-# git clean -fd $THISDIR/extraction/src/test/
-./run extraction $CONFIG_FILE $SPARK_CONF_FILE
-mkdir -p $TMPDIR/dbpedia-test-par-extraction
-DUMPDIR=$(grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p')
-NBFILES=$(find $DUMPDIR -type f -name \*gz | wc -l)
-echo "Moving to $TMPDIR/dbpedia-test-par-extraction/ $NBFILES files."
-
-if [[ $NBFILES == 0 ]]; then
-    echo "Spark did not produce any useful output"
-    exit 1
-fi
-mv `grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p'`/*wiki/*/extraction/* $TMPDIR/dbpedia-test-par-extraction/
+eval "sed -i 's|base\-dir\=.*|base\-dir\=$THISDIR/extraction/src/test/resources/data|g' $CONFIG_FILE"
+eval "sed -i 's|mappings\=.*|mappings\=$THISDIR/extraction/src/test/resources/data/mappings|g' $CONFIG_FILE"
+eval "sed -i 's|ontology\=.*|ontology\=$THISDIR/extraction/src/test/resources/data/ontology.xml|g' $CONFIG_FILE"
 
 echo "===================================================================="
 echo "Running sequential extraction"
@@ -36,13 +23,13 @@ mv `grep base-dir $CONFIG_FILE | sed -ne 's/^base-dir=//p'`/*wiki/*/*wiki*.gz $T
 echo "===================================================================="
 echo "Computing diffs:"
 echo "===================================================================="
-diffs=`diff <(gzip -dc $TMPDIR/dbpedia-test-seq-extraction/*.gz | grep -v "^#" | sort) <(gzip -dc $TMPDIR/dbpedia-test-par-extraction/grouped/*wiki*.gz/part*.gz | grep -v "^#" | sort)`
 
-echo "See result details in $TMPDIR"
+diffs=$(diff <(gzip -dc $TMPDIR/dbpedia-test-seq-extraction/*.gz | grep -v "^#" | sort) <(gzip -dc $TMPDIR/dbpedia-test-par-extraction/grouped/*wiki*.gz/part*.gz | grep -v "^#" | sort))
+
 if [ -z "$diffs" ]; then
-	echo "Outputs match!"
-	exit 0
+   echo "Outputs match!"
+   exit 0
 else
-	echo "Outputs not match!"
-	exit 1
+   echo "Outputs not match!"
+   exit 1
 fi
