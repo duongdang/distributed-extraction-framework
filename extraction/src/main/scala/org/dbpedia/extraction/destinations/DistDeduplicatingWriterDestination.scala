@@ -32,6 +32,21 @@ class DistDeduplicatingWriterDestination(path: Path, hadoopConfiguration: Config
    */
   override def write(rdd: RDD[Seq[Quad]])
   {
+    List(grouped_output) foreach { p => if (!fileSystem.exists(path)) fileSystem.mkdirs(p)}
+
+    rdd.flatMap
+    {
+      quads =>
+        quads.distinct.groupBy(quad => new Text(quad.dataset)).toSeq.map
+        {
+          case (key: Text, quads: Seq[Quad]) => (key, new QuadSeqWritable(quads))
+        }
+    }.saveAsNewAPIHadoopFile(grouped_output.toString,
+                             classOf[Text],
+                             classOf[QuadSeqWritable],
+                             classOf[DBpediaCompositeOutputFormat],
+                             hadoopConfiguration)
+
     rdd.flatMap { x => x}
     .map{ q => List(q.language, q.dataset, q.subject,
       q.predicate, q.value, q.context, q.datatype).mkString("\t") }
