@@ -25,7 +25,7 @@ class DBpediaJobProgressListener(sc: SparkConf) extends JobProgressListener(sc) 
    * The time when this class was created (usually along with the SparkContext).
    * Milliseconds since midnight, January 1, 1970 UTC.
    */
-  val startTime = System.currentTimeMillis()
+  val sparkStartTime = System.currentTimeMillis()
 
   val stageNumTasks = mutable.Map[Int, Int]() // Maps stageId to number of tasks
 
@@ -35,7 +35,7 @@ class DBpediaJobProgressListener(sc: SparkConf) extends JobProgressListener(sc) 
     val stage = stageSubmitted.stageInfo
     val numTasks = stage.numTasks
     stageNumTasks.synchronized(stageNumTasks(stage.stageId) = numTasks)
-    val time = prettyTime(stage.submissionTime.getOrElse(startTime))
+    val time = prettyTime(stage.submissionTime.getOrElse(sparkStartTime))
     logInfo("Stage #%d: Starting stage %s with %d tasks at %s".format(stage.stageId, stage.name, numTasks, time))
   }
 
@@ -43,7 +43,7 @@ class DBpediaJobProgressListener(sc: SparkConf) extends JobProgressListener(sc) 
   {
     super.onStageCompleted(stageCompleted)
     val stage = stageCompleted.stageInfo
-    val time = prettyTime(stage.completionTime.getOrElse(startTime))
+    val time = prettyTime(stage.completionTime.getOrElse(sparkStartTime))
     logInfo("Stage #%d: Finished stage %s at %s".format(stage.stageId, stage.name, time))
   }
 
@@ -96,5 +96,5 @@ class DBpediaJobProgressListener(sc: SparkConf) extends JobProgressListener(sc) 
     super.onTaskGettingResult(taskGettingResult)
   }
 
-  private def prettyTime(time: Long) = StringUtils.prettyMillis(time - startTime)
+  private def prettyTime(time: Long) = StringUtils.prettyMillis(time - sparkStartTime)
 }
