@@ -46,32 +46,35 @@ object DistRedirects
    */
   def load(rdd: RDD[WikiPage], cache: Path, lang: Language)(implicit hadoopConf: Configuration): Redirects =
   {
-    //Try to load redirects from the cache
-    try
-    {
-      return loadFromCache(cache)
-    }
-    catch
-      {
-        case ex: Exception => logger.log(Level.INFO, "Will extract redirects from source for " + lang.wikiCode + " wiki, could not load cache file '" + cache.getSchemeWithFileName + "': " + ex)
-      }
+    // FIXME: Disable redirect links. Temporal hack because loadFromRDD is buggy
+    val empty : Map[String, String] = Map()
+    new Redirects(empty)
+    // //Try to load redirects from the cache
+    // try
+    // {
+    //   return loadFromCache(cache)
+    // }
+    // catch
+    //   {
+    //     case ex: Exception => logger.log(Level.INFO, "Will extract redirects from source for " + lang.wikiCode + " wiki, could not load cache file '" + cache.getSchemeWithFileName + "': " + ex)
+    //   }
 
-    //Load redirects from RDD
-    val redirects = loadFromRDD(rdd, lang)
+    // //Load redirects from RDD
+    // val redirects = loadFromRDD(rdd, lang)
 
-    val dir = cache.getParent
-    if (!dir.exists && !dir.mkdirs()) throw new IOException("cache dir [" + dir.getSchemeWithFileName + "] does not exist and cannot be created")
-    val output = new Output(new BufferedOutputStream(cache.outputStream()))
-    try
-    {
-      DistIOUtils.getKryoInstance.writeClassAndObject(output, redirects.map)
-      logger.info(redirects.map.size + " redirects written to cache file " + cache.getSchemeWithFileName)
-      redirects
-    }
-    finally
-    {
-      output.close()
-    }
+    // val dir = cache.getParent
+    // if (!dir.exists && !dir.mkdirs()) throw new IOException("cache dir [" + dir.getSchemeWithFileName + "] does not exist and cannot be created")
+    // val output = new Output(new BufferedOutputStream(cache.outputStream()))
+    // try
+    // {
+    //   DistIOUtils.getKryoInstance.writeClassAndObject(output, redirects.map)
+    //   logger.info(redirects.map.size + " redirects written to cache file " + cache.getSchemeWithFileName)
+    //   redirects
+    // }
+    // finally
+    // {
+    //   output.close()
+    // }
   }
 
   /**
@@ -169,4 +172,3 @@ object DistRedirects
     ("""(?ius)\s*(?:""" + redirects + """)\s*:?\s*\[\[([^\[\]{}|<>\n]+(?:#[^\n]*?)?)(?:\|[^\n]*?)?\]\].*""").r
   }
 }
-
