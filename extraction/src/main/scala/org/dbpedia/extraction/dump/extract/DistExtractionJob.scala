@@ -11,6 +11,14 @@ import org.dbpedia.extraction.util.StringUtils
 import org.apache.spark.SparkContext._
 import org.dbpedia.util.Exceptions
 
+import org.apache.spark.AccumulatorParam
+import java.io.{StringWriter,PrintWriter}
+
+object LineCummulatorParam extends AccumulatorParam[String] {
+  def zero(value:String) : String = value
+  def addInPlace(s1:String, s2:String):String = s1 + "\n" + s2
+}
+
 /**
  * Executes an extraction using Spark.
  *
@@ -29,13 +37,15 @@ class DistExtractionJob(extractor: => RootExtractor, rdd: => RDD[WikiPage], name
     val sc = rdd.sparkContext
     val allPages = sc.accumulator(0)
     val failedPages = sc.accumulator(0)
+    val errorMessages = sc.accumulator("","debug info")(LineCummulatorParam)
 
-    val loggerBC = sc.broadcast(logger)
-    val extractorBC = sc.broadcast(KryoSerializationWrapper(extractor))
-    val namespacesBC = sc.broadcast(namespaces)
+    val extractorSerializable = KryoSerializationWrapper(extractor)
+    val extractorBC = sc.broadcast(extractorSerializable)
+    val ns = namespaces.map(_.toString)
 
     val startTime = System.currentTimeMillis
 
+    logger.info("Namespaces to broadcast: %s".format(namespaces.mkString(",")))
     val results: RDD[Seq[Quad]] =
       rdd.map
       {
@@ -43,17 +53,29 @@ class DistExtractionJob(extractor: => RootExtractor, rdd: => RDD[WikiPage], name
           // Take a WikiPage, perform the extraction with a set of extractors and return the results as a Seq[Quad].
           val (success, graph) = try
           {
-            (true, if (namespacesBC.value.contains(page.title.namespace)) Some(extractorBC.value.value.apply(page)) else None)
+            val ex = extractorBC.value.value
+            if (!ns.contains(page.title.namespace.toString)) {
+              errorMessages += "page %s skipped as namespace '%s' is not in broadcasted ns: %s".format(page.title, page.title.namespace.toString, ns.mkString(","))
+              (true, None)
+            }
+            else if (ex == null) {
+              errorMessages += "broadcasted extractor is null"
+              (true, None)
+            }
+            else {
+              (true, Some(ex.apply(page)))
+            }
           }
           catch
             {
               case ex: Exception =>
-                loggerBC.value.log(Level.WARNING, "error processing page '" + page.title + "': " + Exceptions.toString(ex, 200))
+                // loggerBC.value.log(Level.WARNING, "error processing page '" + page.title + "': " + Exceptions.toString(ex, 200))
+                val sw = new StringWriter
+                ex.printStackTrace(new PrintWriter(sw))
+                errorMessages += "error processing page %s: %s.\n%s''".format(page.title, Exceptions.toString(ex, 200), sw.toString)
                 (false, None)
             }
-
           if (success) allPages += 1 else failedPages += 1
-
           graph.getOrElse(Nil)
       }
 
@@ -73,6 +95,7 @@ class DistExtractionJob(extractor: => RootExtractor, rdd: => RDD[WikiPage], name
                                                                                        StringUtils.prettyMillis(time),
                                                                                        time.toDouble / allPages.value,
                                                                                        failedPages.value))
+    println("Errors: %s".format(errorMessages.value))
 
     logger.info(description+" finished")
   }
