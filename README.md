@@ -1,6 +1,8 @@
 DBpedia Distributed Extraction Framework 
 ==================================
 
+[![Join the chat at https://gitter.im/duongdang/distributed-extraction-framework](https://badges.gitter.im/duongdang/distributed-extraction-framework.svg)](https://gitter.im/duongdang/distributed-extraction-framework?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This is the distributed version of the [DBpedia Information Extraction Framework](https://github.com/dbpedia/extraction-framework/). It uses [Apache Spark](http://spark.apache.org) to extract structured data from Wikipedia in a parallel, distributed manner.
 
 This is currently a work-in-progress, and the instructions are mostly intended for developers.
